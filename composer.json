@@ -1,0 +1,20 @@
+{
+    "name": "nikush/numeral",
+    "description": "Get numeral forms of numbers",
+    "keywords": ["numeral", "cardinal", "ordinal"],
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Nikush Patel",
+            "email": "nikush.patel7@gmail.com",
+            "homepage": "http://www.nikush.co.uk",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3"
+    },
+    "autoload": {
+        "psr-4": { "Nikush\\": "src" }
+    }
+}
