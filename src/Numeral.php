@@ -1,88 +1,68 @@
 <?php
 
-namespace Nikush;
+namespace Nikush\Numeral;
 
 /**
  * Class for acquiring numeral forms of numbers
  *
  * @author Nikush Patel
- * @link   http://en.wikipedia.org/wiki/English_numerals
  */
 class Numeral
 {
     /**
-     * @var array Names of numbers 0-9
+     * @var \Nikush\Numeral\Locales\Locale
      */
-    protected $cardinalUnits = array(
-        'Zero',
-        'One',
-        'Two',
-        'Three',
-        'Four',
-        'Five',
-        'Six',
-        'Seven',
-        'Eight',
-        'Nine'
-    );
+    protected $locale;
 
     /**
-     * @var array Names of numbers that are multiples of tens
+     * Constructor
+     *
+     * If the locale is not specified, it will attempt to detect the locale set
+     * on the machine.  If the specified or detected locale is unrecognised, it
+     * will default to 'en_US'.
+     *
+     * @param string $locale The locale to use
      */
-    protected $cardinalTens = array(
-        'Ten',
-        'Twenty',
-        'Thirty',
-        'Forty',
-        'Fifty',
-        'Sixty',
-        'Seventy',
-        'Eighty',
-        'Ninety'
-    );
+    public function __construct($locale = null)
+    {
+        $locales = array(
+            'en_US' => 'En_US',
+            'en_GB' => 'En_GB',
+        );
+
+        // detect the user's locale
+        if (is_null($locale)) {
+            $parts = explode('.', setlocale(LC_CTYPE, 0));
+            $locale = $parts[0];
+        }
+
+        // default to en_US if specified locale is not registered
+        if (!isset($locales[$locale])) {
+            $locale = 'en_US';
+        }
+
+        $l = '\\Nikush\\Numeral\\Locales\\'.$locales[$locale];
+        $l = new $l();          // instantiate it
+        $this->setLocale($l);
+    }
 
     /**
-     * @var array Names of teen numbers 10-19 that don't fit into the pattern
+     * @param \Nikush\Numeral\Locales\Locale $locale
+     * @codeCoverageIgnore
      */
-    protected $cardinalTeens = array(
-        'Ten',
-        'Eleven',
-        'Twelve',
-        'Thirteen',
-        'Fourteen',
-        'Fifteen',
-        'Sixteen',
-        'Seventeen',
-        'Eighteen',
-        'Nineteen'
-    );
+    public function setLocale(\Nikush\Numeral\Locales\Locale $locale)
+    {
+        $this->locale = $locale;
+    }
 
     /**
-     * @var array Names of big numbers going up in thousands
+     * @return \Nikush\Numeral\Locales\Locale
+     * @codeCoverageIgnore
      */
-    protected $cardinalThousands = array(
-        'Thousand',
-        'Million',
-        'Billion',
-        'Trillion',
-        'Quadrillion',
-        'Quintillion'
-    );
-
-    /**
-     * @var array Names of ordinal units
-     */
-    protected $ordinalUnits = array(
-        'First',
-        'Second',
-        'Third',
-        'Fourth',
-        'Fifth',
-        'Sixth',
-        'Seventh',
-        'Eighth',
-        'Ninth'
-    );
+    public function getLocale()
+    {
+        return $this->locale;
+    }
 
     /**
      * Get the cardinal form of any number
@@ -92,12 +72,12 @@ class Numeral
      */
     public function cardinal($num)
     {
-        $decimals = ''; // cardinal decimal numbers
-        $sign = $num < 0 ? 'Minus ' : '';
+        $decimals = '';     // cardinal decimal numbers
+        $sign = $num < 0 ? $this->locale->getNegativeWord().' ' : '';
         $num = abs($num);   // normalize to an absolute number
 
         if (is_float($num)) {
-            $decimals = ' Point';
+            $decimals = ' '.$this->locale->getDecimalWord();
 
             // process the float as a string and cut off the decimals to parse
             // them
@@ -105,83 +85,18 @@ class Numeral
             // print the number as an int: strval(2.0) // 2
             if (!strpos($num, '.')) {
                 // if no decimals point was found, the decimal is 0
-                $decimals .= ' ' . $this->cardinalUnits[0];
+                $decimals .= ' ' . $this->locale->getCardinal(0);
             } else {
                 list($before_dot, $after_dot) = explode('.', $num);
-                foreach (str_split($after_dot) as $char) {
-                    $decimals .= ' ' . $this->cardinalUnits[$char];
+                foreach (str_split($after_dot) as $digit) {
+                    $decimals .= ' ' . $this->locale->getCardinal($digit);
                 }
             }
             // normalize to an int for the rest of the parsing
             $num = (int) $num;
         }
 
-        return $sign . $this->cardinalInt($num) . $decimals;
-    }
-
-    /**
-     * Get the cardinal of an absolute integer
-     *
-     * @param  int    $num
-     * @return string
-     */
-    protected function cardinalInt($num)
-    {
-        if ($num < 10) {
-            return $this->cardinalUnits[$num];
-        }
-        if ($num < 20) {
-            return $this->cardinalTeens[$num - 10];
-        }
-        if ($num < 100) {
-            $tens = (int) floor($num / 10);   // multiple of tens
-            $units = $num % 10;         // single after the ten
-
-            $str = $this->cardinalTens[$tens - 1];
-            if ($units != 0) {
-                // tens are hyphenated, eg. Twenty-One
-                $str .= '-' . $this->cardinalUnits[$units];
-            }
-            return $str;
-        }
-        if ($num < 1000) {
-            $hundred = (int) floor($num / 100); // multiple of hundreds
-            $tens = $num % 100;                 // tens
-            $str = $this->cardinalUnits[$hundred];
-            $str .= ' Hundred';
-            if ($tens != 0) {
-                $str .= ' and ';
-                $str .= $this->cardinalint($tens);
-            }
-            return $str;
-        }
-
-        // loop through big number names highest to lowest
-        for ($i = count($this->cardinalThousands) - 1; $i >= 0; $i--) {
-            // value of the current big number, eg. thousand = 1000
-            $val = pow(1000, $i + 1);
-            if ($num < $val) {
-                continue;   // skip if it's too big
-            }
-
-            $name = $this->cardinalThousands[$i];   // name of current number
-            // how many of the current number? 1 thousand? 2 thousand? etc.
-            $multiple = (int) floor($num / $val);
-
-            // get the cardinal for $multiple
-            $str = $this->cardinalint($multiple);
-            $str .= " $name";
-
-            // the rest of the number after the multiple
-            $rest = $num % $val;
-            if ($rest != 0) {
-                if ($rest < 100) {
-                    $str .= ' and';
-                }
-                $str .= ' ' . $this->cardinalInt($rest);
-            }
-            return $str;
-        }
+        return $sign . $this->locale->getCardinal($num) . $decimals;
     }
 
     /**
@@ -197,64 +112,6 @@ class Numeral
             throw new \OutOfRangeException("Provided number must be a positive interger greater than 0");
         }
 
-        if ($num < 10) {
-            return $this->ordinalUnits[$num - 1];
-        }
-        if ($num < 20) {
-            if ($num == 12) {
-                return 'Twelfth';
-            }
-            return $this->cardinalInt($num).'th';
-        }
-        if ($num < 100) {
-            $tens = (int) floor($num / 10);
-            $units = $num % 10;
-
-            if ($units == 0) {
-                $str = $this->cardinalInt($tens * 10);  // get the cardinal
-                return str_replace('y', 'ieth', $str);  // convert to ordinal
-            }
-
-            $str = $this->cardinalInt($tens * 10);
-            $str .= '-' . $this->ordinalUnits[$units - 1];
-            return $str;
-        }
-        if ($num < 1000) {
-            $multiple = (int) floor($num / 100);
-            $tens = $num % 100;
-
-            $str = $this->cardinal($multiple * 100);
-
-            if ($tens == 0) {
-                return $str .= 'th';
-            }
-
-            return $str . ' and ' . $this->ordinal($tens);
-        }
-
-        // loop through big number names highest to lowest
-        for ($i = count($this->cardinalThousands) - 1; $i >= 0; $i--) {
-            $val = pow(1000, $i + 1);
-            if ($num < $val) {
-                continue;   // skip if it's too big
-            }
-
-            // how many of the current number? 1 thousand? 2 thousand? etc.
-            $multiple = (int) floor($num / $val);
-
-            // the rest of the number after the multiple
-            $rest = $num % $val;
-
-            $str = $this->cardinal($multiple * $val);
-
-            if ($rest == 0) {
-                return $str .= 'th';
-            }
-            if ($rest < 100) {
-                $str .= ' and';
-            }
-
-            return $str . ' ' . $this->ordinal($rest);
-        }
+        return $this->locale->getOrdinal($num);
     }
 }

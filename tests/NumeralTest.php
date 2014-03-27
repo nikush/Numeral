@@ -1,104 +1,131 @@
 <?php
 
-namespace Nikush;
+namespace Nikush\Numeral;
 
 class NumeralTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var \Nikush\Numeral
+     * @var \Nikush\Numeral\Numeral
      */
     protected $numeral;
+
+    /**
+     * @var \Nikush\Numeral\Locales\Locale
+     */
+    protected $mock;
 
     public function setUp()
     {
         parent::setUp();
+        $this->mock = $this->getMock('\Nikush\Numeral\Locales\Locale');
         $this->numeral = new Numeral();
+        $this->numeral->setLocale($this->mock);
     }
 
     public function tearDown()
     {
         parent::tearDown();
-        unset($this->numeral);
+        unset($this->numeral, $this->mock);
     }
 
     /**
-     * @dataProvider cardinalProvider
+     * @covers \Nikush\Numeral\Numeral::__construct
      */
-    public function testCardinals($number, $cardinal)
+    public function testConstructor()
     {
-        $this->assertEquals($this->numeral->cardinal($number), $cardinal);
+        setlocale(LC_ALL, 'en_GB.UTF-8');   // set machine locale
+        // nothing specified, detect machine locale
+        $temp = new Numeral();
+        $this->assertInstanceOf('\\Nikush\\Numeral\\Locales\\En_GB', $temp->getLocale());
+
+        // specified en_GB
+        $temp = new Numeral('en_GB');
+        $this->assertInstanceOf('\\Nikush\\Numeral\\Locales\\En_GB', $temp->getLocale());
+
+        // unrecognised locale, default to en_US
+        $temp = new Numeral('crap');
+        $this->assertInstanceOf('\\Nikush\\Numeral\\Locales\\En_US', $temp->getLocale());
+
+        unset($temp);
     }
 
     /**
-     * @dataProvider ordinalProvider
+     * @covers \Nikush\Numeral\Numeral::cardinal
      */
-    public function testOrdinals($number, $ordinal)
+    public function testNegativeCardinal()
     {
-        $this->assertEquals($this->numeral->ordinal($number), $ordinal);
+        $this->mock->expects($this->once())
+            ->method('getCardinal')
+            ->with(1)
+            ->will($this->returnValue('One'));
+        $this->mock->expects($this->once())
+            ->method('getNegativeWord')
+            ->will($this->returnValue('Negative'));
+        $this->assertEquals($this->numeral->cardinal(-1), 'Negative One');
     }
 
     /**
+     * @covers \Nikush\Numeral\Numeral::cardinal
+     */
+    public function testCardinalFloat()
+    {
+        $this->mock->expects($this->any())
+            ->method('getCardinal')
+            ->will($this->returnValue('One'));
+        $this->mock->expects($this->once())
+            ->method('getDecimalWord')
+            ->will($this->returnValue('Point'));
+        $this->assertEquals($this->numeral->cardinal(1.11), 'One Point One One');
+    }
+
+    /**
+     * @covers \Nikush\Numeral\Numeral::cardinal
+     */
+    public function testCardinalFloatZeroDecimal()
+    {
+        $this->mock->expects($this->any())
+            ->method('getCardinal')
+            ->will($this->returnValueMap(array(
+                array(0, 'Zero'),
+                array(1, 'One'),
+            )));
+        $this->mock->expects($this->once())
+            ->method('getDecimalWord')
+            ->will($this->returnValue('Point'));
+        $this->assertEquals($this->numeral->cardinal(1.0), 'One Point Zero');
+    }
+
+    /**
+     * @covers \Nikush\Numeral\Numeral::ordinal
+     */
+    public function testOrdinal()
+    {
+        $this->mock->expects($this->once())
+            ->method('getOrdinal')
+            ->with(1)
+            ->will($this->returnValue('First'));
+        $this->assertEquals($this->numeral->ordinal(1), 'First');
+    }
+
+    /**
+     * @covers \Nikush\Numeral\Numeral::ordinal
+     */
+    public function testOrdinalConvertsNegatives()
+    {
+        $this->mock->expects($this->once())
+            ->method('getOrdinal')
+            ->with(1)
+            ->will($this->returnValue('First'));
+        $this->assertEquals($this->numeral->ordinal(-1), 'First');
+    }
+
+    /**
+     * @covers \Nikush\Numeral\Numeral::ordinal
      * @expectedException OutOfRangeException
      * @expectedExceptionMessage Provided number must be a positive interger greater than 0
      */
     public function testOrdinalThrowExceptionWhenGivenZero()
     {
         $this->numeral->ordinal(0);
-    }
-
-    public function cardinalProvider()
-    {
-        return [
-            [-1, 'Minus One'],
-            [0, 'Zero'],
-            [1, 'One'],
-            [2.0, 'Two Point Zero'],
-            [2.5, 'Two Point Five'],
-            [11, 'Eleven'],
-            [69, 'Sixty-Nine'],
-            [101, 'One Hundred and One'],
-            [999, 'Nine Hundred and Ninety-Nine'],
-            [1001, 'One Thousand and One'],
-            [1234, 'One Thousand Two Hundred and Thirty-Four'],
-            [12345, 'Twelve Thousand Three Hundred and Forty-Five'],
-            [101000, 'One Hundred and One Thousand'],
-            [123456, 'One Hundred and Twenty-Three Thousand Four Hundred and Fifty-Six'],
-            [1000001, 'One Million and One'],
-            [1234567, 'One Million Two Hundred and Thirty-Four Thousand Five Hundred and Sixty-Seven'],
-            [20000000, 'Twenty Million'],
-            [300000000, 'Three Hundred Million'],
-            [4000000000, 'Four Billion'],
-        ];
-    }
-
-    public function ordinalProvider()
-    {
-        return [
-            [-1, 'First'],
-            [1, 'First'],
-            [10, 'Tenth'],
-            [11, 'Eleventh'],
-            [12, 'Twelfth'],
-            [13, 'Thirteenth'],
-            [20, 'Twentieth'],
-            [21, 'Twenty-First'],
-            [22, 'Twenty-Second'],
-            [30, 'Thirtieth'],
-            [69, 'Sixty-Ninth'],
-            [100, 'One Hundredth'],
-            [101, 'One Hundred and First'],
-            [110, 'One Hundred and Tenth'],
-            [111, 'One Hundred and Eleventh'],
-            [120, 'One Hundred and Twentieth'],
-            [121, 'One Hundred and Twenty-First'],
-            [1000, 'One Thousandth'],
-            [1001, 'One Thousand and First'],
-            [1010, 'One Thousand and Tenth'],
-            [1100, 'One Thousand One Hundredth'],
-            [10000, 'Ten Thousandth'],
-            [100000, 'One Hundred Thousandth'],
-            [1000000, 'One Millionth'],
-            [1000001, 'One Million and First'],
-        ];
     }
 }
