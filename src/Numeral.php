@@ -14,7 +14,15 @@ class Numeral
      * @var array Names of numbers 0-9
      */
     protected $cardinalUnits = array(
-        'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight',
+        'Zero',
+        'One',
+        'Two',
+        'Three',
+        'Four',
+        'Five',
+        'Six',
+        'Seven',
+        'Eight',
         'Nine'
     );
 
@@ -22,23 +30,42 @@ class Numeral
      * @var array Names of numbers that are multiples of tens
      */
     protected $cardinalTens = array(
-        'Ten', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy',
-        'Eighty', 'Ninety'
+        'Ten',
+        'Twenty',
+        'Thirty',
+        'Forty',
+        'Fifty',
+        'Sixty',
+        'Seventy',
+        'Eighty',
+        'Ninety'
     );
 
     /**
-     * @var array Names of numbers 10-19 that don't fit into the pattern
+     * @var array Names of teen numbers 10-19 that don't fit into the pattern
      */
-    protected $cardinalTen2Twenty = array(
-        'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen',
-        'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
+    protected $cardinalTeens = array(
+        'Ten',
+        'Eleven',
+        'Twelve',
+        'Thirteen',
+        'Fourteen',
+        'Fifteen',
+        'Sixteen',
+        'Seventeen',
+        'Eighteen',
+        'Nineteen'
     );
 
     /**
      * @var array Names of big numbers going up in thousands
      */
     protected $cardinalThousands = array(
-        'Thousand', 'Million', 'Billion', 'Trillion', 'Quadrillion',
+        'Thousand',
+        'Million',
+        'Billion',
+        'Trillion',
+        'Quadrillion',
         'Quintillion'
     );
 
@@ -46,8 +73,15 @@ class Numeral
      * @var array Names of ordinal units
      */
     protected $ordinalUnits = array(
-        'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh',
-        'Eighth', 'Ninth'
+        'First',
+        'Second',
+        'Third',
+        'Fourth',
+        'Fifth',
+        'Sixth',
+        'Seventh',
+        'Eighth',
+        'Ninth'
     );
 
     /**
@@ -97,7 +131,7 @@ class Numeral
             return $this->cardinalUnits[$num];
         }
         if ($num < 20) {
-            return $this->cardinalTen2Twenty[$num - 10];
+            return $this->cardinalTeens[$num - 10];
         }
         if ($num < 100) {
             $tens = (int) floor($num / 10);   // multiple of tens

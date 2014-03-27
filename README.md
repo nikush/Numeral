@@ -34,7 +34,6 @@ $n = new Numeral();
 echo $n->cardinal(1); // 'One'
 
 echo $n->ordinal(1);  // 'First'
-
 ```
 
 A more practical example:

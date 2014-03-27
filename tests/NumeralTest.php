@@ -95,7 +95,6 @@ class NumeralTest extends \PHPUnit_Framework_TestCase
             [1001, 'One Thousand and First'],
             [1010, 'One Thousand and Tenth'],
             [1100, 'One Thousand One Hundredth'],
-            [1100, 'One Thousand One Hundredth'],
             [10000, 'Ten Thousandth'],
             [100000, 'One Hundred Thousandth'],
             [1000000, 'One Millionth'],
