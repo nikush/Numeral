@@ -1,5 +1,15 @@
 Numeral
 =======
+This project is now **discontinued** and will not be maintained any further.
+PHP's built-in
+[`NumberFormatter`](http://uk3.php.net/manual/en/class.numberformatter.php)
+class can be used to spell out words and ordinals using the
+`NumberFormatter::SPELLOUT` and `NumberFormatter::ORDINAL` flags.  The package
+has also been removed from packagist, preventing any installations through
+composer.
+
+---
+
 This library provides an easy way to convert numbers to words.  It supports
 the cardinal (one, two, three, etc.) and ordinal (first, second, third, etc.)
 forms.
